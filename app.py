@@ -152,60 +152,80 @@ def add_transaction():
 @login_required
 def dashboard():
     db = get_db()
-    
-    transactions = db.execute('''
-        SELECT * FROM transactions WHERE user_id = ? ORDER BY date DESC
-    ''', (current_user.id,)).fetchall()
-    
+
+    transactions = db.execute(
+        '''
+        SELECT * 
+        FROM transactions 
+        WHERE user_id = ? 
+        ORDER BY date DESC
+        ''',
+        (current_user.id,)
+    ).fetchall()
+
     total_income = 0.0
     total_expense = 0.0
-    expenses_by_category = {}
-    
+
     for t in transactions:
         amount = float(t['amount'])
         if t['type'] == 'income':
             total_income += amount
         else:
             total_expense += amount
-            cat = t['category']
-            expenses_by_category[cat] = expenses_by_category.get(cat, 0.0) + amount
-    
-    print("Расходы по категориям (суммы):", expenses_by_category)
-    
+
     balance = total_income - total_expense
-    
+
     forecast_html = None
     forecast = get_forecast(current_user.id, db)
+
     if forecast:
         df_forecast = pd.DataFrame({
-            'День': range(1, len(forecast)+1),
+            'День': range(1, len(forecast) + 1),
             'Прогноз расходов (₽)': forecast
         })
         fig = px.line(df_forecast, x='День', y='Прогноз расходов (₽)',
                       title='Прогноз расходов на следующую неделю')
         forecast_html = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-    
+
     pie_html = None
-    if expenses_by_category:
-        pie_data = {cat: float(amt) for cat, amt in expenses_by_category.items()}
+
+    expense_rows = db.execute(
+        '''
+        SELECT category, SUM(amount) AS total_amount
+        FROM transactions
+        WHERE user_id = ? AND type = 'expense'
+        GROUP BY category
+        ORDER BY total_amount DESC
+        ''',
+        (current_user.id,)
+    ).fetchall()
+
+    if expense_rows:
         pie_df = pd.DataFrame({
-            'Категория': list(pie_data.keys()),
-            'Сумма': list(pie_data.values())
+            'Категория': [row['category'] for row in expense_rows],
+            'Сумма': [float(row['total_amount']) for row in expense_rows]
         })
-        fig_pie = px.pie(pie_df, values='Сумма', names='Категория', title='Расходы по категориям')
-        print("pie_df:\n", pie_df)
+
+        fig_pie = px.pie(
+            pie_df,
+            values='Сумма',
+            names='Категория',
+            title='Расходы по категориям'
+        )
         pie_html = json.dumps(fig_pie, cls=plotly.utils.PlotlyJSONEncoder)
-    
+
     recent = list(transactions[:10])
-    
-    return render_template('dashboard.html',
-                         balance=balance,
-                         total_income=total_income,
-                         total_expense=total_expense,
-                         pie_html=pie_html,
-                         forecast_html=forecast_html,
-                         recent=recent,
-                         len=len)
+
+    return render_template(
+        'dashboard.html',
+        balance=balance,
+        total_income=total_income,
+        total_expense=total_expense,
+        pie_html=pie_html,
+        forecast_html=forecast_html,
+        recent=recent,
+        len=len
+    )
 
 def get_forecast(user_id, db):
     rows = db.execute('''
