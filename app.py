@@ -205,7 +205,14 @@ def dashboard():
             'Категория': [row['category'] for row in expense_rows],
             'Сумма': [float(row['total_amount']) for row in expense_rows]
         })
-
+        print("EXPENSE ROWS:")
+        for row in expense_rows:
+            print(dict(row))
+        
+        print("\nPIE DF:")
+        print(pie_df)
+        print(pie_df.dtypes)
+        
         fig_pie = px.pie(
             pie_df,
             values='Сумма',
