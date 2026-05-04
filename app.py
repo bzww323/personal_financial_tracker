@@ -219,7 +219,7 @@ def dashboard():
             names='Категория',
             title='Расходы по категориям'
         )
-        pie_html = fig_pie.to_json()
+        pie_html = fig_pie.to_dict()
 
     recent = list(transactions[:10])
 
