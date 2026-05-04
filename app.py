@@ -127,29 +127,40 @@ def dashboard():
     expense_data = [{'category': r['category'], 'total': float(r['total'])} for r in expense_rows]
     
     forecast_html = None
-    rows = db.execute('SELECT date, SUM(amount) as daily_expense FROM transactions WHERE user_id = ? AND type = "expense" GROUP BY date ORDER BY date DESC LIMIT 30', (current_user.id,)).fetchall()
-    if len(rows) >= 7:
-        df = pd.DataFrame([(row['date'], float(row['daily_expense'])) for row in rows], columns=['date', 'expense']).sort_values('date')
-        X = np.arange(len(df)).reshape(-1, 1)
-        y = df['expense'].values
-        model = LinearRegression().fit(X, y)
-        forecast = np.maximum(model.predict(np.arange(len(df), len(df) + 7).reshape(-1, 1)), 0).tolist()
-        df_forecast = pd.DataFrame({'День': range(1, 8), 'Прогноз расходов': forecast})
-        fig = px.line(df_forecast, x='День', y='Прогноз расходов', title='Прогноз расходов на следующую неделю')
-        forecast_html = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    rows = db.execute('''
+        SELECT date, SUM(amount) as daily_expense
+        FROM transactions
+        WHERE user_id = ? AND type = 'expense'
+        GROUP BY date
+        ORDER BY date DESC
+        LIMIT 30
+    ''', (current_user.id,)).fetchall()
     
-    pie_html = None
-    if expense_rows:
-        pie_df = pd.DataFrame({'Категория': [r['category'] for r in expense_rows], 'Сумма': [float(r['total']) for r in expense_rows]})
-        fig_pie = px.pie(pie_df, values='Сумма', names='Категория', title='Расходы по категориям')
-        pie_html = json.dumps(fig_pie, cls=plotly.utils.PlotlyJSONEncoder)
+    print(f"[DEBUG] Distinct expense days count: {len(rows)}")
+    if len(rows) >= 7:
+        try:
+            df = pd.DataFrame([(row['date'], float(row['daily_expense'])) for row in rows],
+                              columns=['date', 'expense']).sort_values('date')
+            X = np.arange(len(df)).reshape(-1, 1)
+            y = df['expense'].values
+            model = LinearRegression().fit(X, y)
+            forecast = np.maximum(model.predict(np.arange(len(df), len(df) + 7).reshape(-1, 1)), 0).tolist()
+            print(f"[DEBUG] Forecast values: {forecast}")
+            df_forecast = pd.DataFrame({'День': range(1, 8), 'Прогноз расходов': forecast})
+            fig = px.line(df_forecast, x='День', y='Прогноз расходов',
+                          title='Прогноз расходов на следующую неделю')
+            forecast_html = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+            print(f"[DEBUG] forecast_html generated, length: {len(forecast_html)}")
+        except Exception as e:
+            print(f"[ERROR] Forecast creation failed: {e}")
+    else:
+        print("[DEBUG] Not enough distinct dates for forecast")
     
     recent = list(transactions[:10])
     return render_template('dashboard.html',
                          balance=balance,
                          total_income=total_income,
                          total_expense=total_expense,
-                         pie_html=pie_html,
                          forecast_html=forecast_html,
                          recent=recent,
                          len=len,
