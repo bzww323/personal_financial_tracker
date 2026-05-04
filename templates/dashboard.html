@@ -86,6 +86,7 @@
 
     {% if pie_html %}
     let pieGraph = {{ pie_html | safe }};
+    console.log("PIE GRAPH DATA:", pieGraph);
     renderChart('pieChart', pieGraph);
     {% endif %}
     
