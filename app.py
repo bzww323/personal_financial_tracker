@@ -212,7 +212,7 @@ def dashboard():
             names='Категория',
             title='Расходы по категориям'
         )
-        pie_html = json.dumps(fig_pie, cls=plotly.utils.PlotlyJSONEncoder)
+        pie_html = fig_pie.to_json()
 
     recent = list(transactions[:10])
 
