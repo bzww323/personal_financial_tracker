@@ -77,18 +77,16 @@
 </div>
 
 <script>
-    // Функция для безопасного получения данных графика
     function renderChart(elementId, chartData) {
         var element = document.getElementById(elementId);
         if (element && chartData && chartData.data && chartData.layout) {
-            // Если график уже был нарисован, удаляем его и рисуем заново
             Plotly.purge(elementId);
             Plotly.newPlot(elementId, chartData.data, chartData.layout);
         }
     }
 
     {% if pie_html %}
-    var pieGraph = {{ pie_html | tojson }};
+    var pieGraph = {{ pie_html | safe }};
     renderChart('pieChart', pieGraph);
     {% endif %}
     
