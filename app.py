@@ -193,6 +193,7 @@ def dashboard():
             'Сумма': list(pie_data.values())
         })
         fig_pie = px.pie(pie_df, values='Сумма', names='Категория', title='Расходы по категориям')
+        print("pie_df:\n", pie_df)
         pie_html = json.dumps(fig_pie, cls=plotly.utils.PlotlyJSONEncoder)
     
     recent = list(transactions[:10])
