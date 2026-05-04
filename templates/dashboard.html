@@ -39,8 +39,43 @@
         </div>
     </div>
     {% endif %}
-    {% if forecast_html %}
+    
     <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5>Расходы по категориям</h5>
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr><th>Категория</th><th>Сумма</th><th>Доля</th></tr>
+                    </thead>
+                    <tbody>
+                        {% set expense_rows = get_expense_rows() %}
+                        {% if expense_rows %}
+                            {% set total = expense_rows | sum(attribute='total') %}
+                            {% for row in expense_rows %}
+                            <tr>
+                                <td>{{ row.category }}</td>
+                                <td>{{ row.total }} ₽</td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar" role="progressbar" style="width: {{ (row.total / total * 100)|round(1) }}%">
+                                            {{ (row.total / total * 100)|round(1) }}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr><td colspan="3">Нет расходов</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% if forecast_html %}
+    <div class="col-md-12 mt-3">
         <div class="card">
             <div class="card-body">
                 <div id="forecastChart"></div>
@@ -78,26 +113,18 @@
 <script>
     function renderChart(elementId, chartData) {
         let el = document.getElementById(elementId);
-        if ( el && chartData && chartData.data && chartData.layout ) {
+        if (el && chartData && chartData.data && chartData.layout) {
             Plotly.purge(elementId);
             Plotly.newPlot(elementId, chartData.data, chartData.layout);
         }
     }
-
     {% if pie_html %}
-        let pieGraph = {{ pie_html | safe }};
-        console.log("===== PIE GRAPH DATA =====");
-        console.log(pieGraph);
-        if (pieGraph && pieGraph.data && pieGraph.data[0]) {
-            console.log("Values array:", pieGraph.data[0].values);
-            console.log("Labels array:", pieGraph.data[0].labels);
-        }
-        renderChart('pieChart', pieGraph);
+    let pieGraph = {{ pie_html | safe }};
+    renderChart('pieChart', pieGraph);
     {% endif %}
-    
     {% if forecast_html %}
-        let forecastGraph = {{ forecast_html | safe }};
-        renderChart('forecastChart', forecastGraph);
+    let forecastGraph = {{ forecast_html | safe }};
+    renderChart('forecastChart', forecastGraph);
     {% endif %}
 </script>
 {% endblock %}
