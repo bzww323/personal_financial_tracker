@@ -88,7 +88,7 @@
     }
 
     {% if pie_html %}
-    var pieGraph = {{ pie_html|safe }};
+    var pieGraph = {{ pie_html | tojson }};
     renderChart('pieChart', pieGraph);
     {% endif %}
     
