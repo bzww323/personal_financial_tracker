@@ -90,13 +90,13 @@ def register():
         db = get_db()
         existing = db.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
         if existing:
-            flash('User already exists', 'danger')
+            flash('Пользователь уже существует', 'danger')
             return render_template('register.html')
         
         password_hash = generate_password_hash(password)
         db.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)', (username, password_hash))
         db.commit()
-        flash('Registration successful. Please log in.', 'success')
+        flash('Регистрация успешна. Пожалуйста, войдите.', 'success')
         return redirect(url_for('login'))
     
     return render_template('register.html')
@@ -117,7 +117,7 @@ def login():
             login_user(User(user['id'], user['username']))
             return redirect(url_for('dashboard'))
         else:
-            flash('Invalid username or password', 'danger')
+            flash('Неверное имя пользователя или пароль', 'danger')
     
     return render_template('login.html')
 
@@ -143,7 +143,7 @@ def add_transaction():
             VALUES (?, ?, ?, ?, ?, ?)
         ''', (current_user.id, amount, trans_type, category, date, description))
         db.commit()
-        flash('Transaction added', 'success')
+        flash('Транзакция добавлена', 'success')
         return redirect(url_for('dashboard'))
     
     return render_template('add_transaction.html')
@@ -157,41 +157,48 @@ def dashboard():
         SELECT * FROM transactions WHERE user_id = ? ORDER BY date DESC
     ''', (current_user.id,)).fetchall()
     
-    total_income = 0
-    total_expense = 0
+    total_income = 0.0
+    total_expense = 0.0
     expenses_by_category = {}
     
     for t in transactions:
+        # Принудительно преобразуем amount в float (на случай, если пришло строкой)
+        amount = float(t['amount'])
         if t['type'] == 'income':
-            total_income += t['amount']
+            total_income += amount
         else:
-            total_expense += t['amount']
-            expenses_by_category[t['category']] = expenses_by_category.get(t['category'], 0) + t['amount']
+            total_expense += amount
+            cat = t['category']
+            expenses_by_category[cat] = expenses_by_category.get(cat, 0.0) + amount
+    
+    # Отладка: выводим суммы по категориям в консоль
+    print("Расходы по категориям (суммы):", expenses_by_category)
     
     balance = total_income - total_expense
     
+    # --- Прогноз (ML) ---
     forecast_html = None
     forecast = get_forecast(current_user.id, db)
     if forecast:
         df_forecast = pd.DataFrame({
-            'Day': range(1, len(forecast)+1),
-            'Predicted Expense (RUB)': forecast
+            'День': range(1, len(forecast)+1),
+            'Прогноз расходов (₽)': forecast
         })
-        fig = px.line(df_forecast, x='Day', y='Predicted Expense (RUB)',
-                      title='Weekly Expense Forecast')
+        fig = px.line(df_forecast, x='День', y='Прогноз расходов (₽)',
+                      title='Прогноз расходов на следующую неделю')
         forecast_html = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
     
+    # --- Круговая диаграмма расходов ---
     pie_html = None
     if expenses_by_category:
+        # Убеждаемся, что суммы float
         pie_data = {cat: float(amt) for cat, amt in expenses_by_category.items()}
         pie_df = pd.DataFrame({
-            'Category': list(pie_data.keys()),
-            'Amount': list(pie_data.values())
+            'Категория': list(pie_data.keys()),
+            'Сумма': list(pie_data.values())
         })
-        fig_pie = px.pie(pie_df, values='Amount', names='Category', title='Расходы по категориям')
+        fig_pie = px.pie(pie_df, values='Сумма', names='Категория', title='Расходы по категориям')
         pie_html = json.dumps(fig_pie, cls=plotly.utils.PlotlyJSONEncoder)
-    else:
-        pie_html = None
     
     recent = list(transactions[:10])
     
@@ -217,7 +224,7 @@ def get_forecast(user_id, db):
     if len(rows) < 7:
         return None
     
-    df = pd.DataFrame([(row['date'], row['daily_expense']) for row in rows], columns=['date', 'expense'])
+    df = pd.DataFrame([(row['date'], float(row['daily_expense'])) for row in rows], columns=['date', 'expense'])
     df = df.sort_values('date')
     
     X = np.arange(len(df)).reshape(-1, 1)
