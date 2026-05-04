@@ -39,7 +39,6 @@
         </div>
     </div>
     {% endif %}
-    
     {% if forecast_html %}
     <div class="col-md-6">
         <div class="card">
@@ -78,20 +77,20 @@
 
 <script>
     function renderChart(elementId, chartData) {
-        var element = document.getElementById(elementId);
-        if (element && chartData && chartData.data && chartData.layout) {
+        let el = document.getElementById(elementId);
+        if (el && chartData && chartData.data && chartData.layout) {
             Plotly.purge(elementId);
             Plotly.newPlot(elementId, chartData.data, chartData.layout);
         }
     }
 
     {% if pie_html %}
-    var pieGraph = {{ pie_html | safe }};
+    let pieGraph = {{ pie_html | safe }};
     renderChart('pieChart', pieGraph);
     {% endif %}
     
     {% if forecast_html %}
-    var forecastGraph = {{ forecast_html|safe }};
+    let forecastGraph = {{ forecast_html | safe }};
     renderChart('forecastChart', forecastGraph);
     {% endif %}
 </script>
