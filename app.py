@@ -183,13 +183,15 @@ def dashboard():
     
     pie_html = None
     if expenses_by_category:
-    pie_data = {cat: float(amt) for cat, amt in expenses_by_category.items()}
-    pie_df = pd.DataFrame({
-        'Category': list(pie_data.keys()),
-        'Amount': list(pie_data.values())
-    })
-    fig_pie = px.pie(pie_df, values='Amount', names='Category', title='Расходы по категориям')
-    pie_html = json.dumps(fig_pie, cls=plotly.utils.PlotlyJSONEncoder)
+        pie_data = {cat: float(amt) for cat, amt in expenses_by_category.items()}
+        pie_df = pd.DataFrame({
+            'Category': list(pie_data.keys()),
+            'Amount': list(pie_data.values())
+        })
+        fig_pie = px.pie(pie_df, values='Amount', names='Category', title='Расходы по категориям')
+        pie_html = json.dumps(fig_pie, cls=plotly.utils.PlotlyJSONEncoder)
+    else:
+        pie_html = None
     
     recent = list(transactions[:10])
     
