@@ -1,29 +1,29 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Financial Dashboard</h2>
+<h2>Финансовая панель</h2>
 
 <div class="row mb-4">
     <div class="col-md-4">
         <div class="card text-white bg-success">
             <div class="card-body">
-                <h5>Income</h5>
-                <h3>{{ total_income }} RUB</h3>
+                <h5>Доходы</h5>
+                <h3>{{ total_income }} ₽</h3>
             </div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="card text-white bg-danger">
             <div class="card-body">
-                <h5>Expenses</h5>
-                <h3>{{ total_expense }} RUB</h3>
+                <h5>Расходы</h5>
+                <h3>{{ total_expense }} ₽</h3>
             </div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="card text-white bg-primary">
             <div class="card-body">
-                <h5>Balance</h5>
-                <h3>{{ balance }} RUB</h3>
+                <h5>Баланс</h5>
+                <h3>{{ balance }} ₽</h3>
             </div>
         </div>
     </div>
@@ -52,24 +52,24 @@
 </div>
 
 <div class="card mt-4">
-    <div class="card-header">Recent Transactions</div>
+    <div class="card-header">Последние транзакции</div>
     <div class="card-body">
         <table class="table table-striped">
             <thead>
-                <tr><th>Date</th><th>Type</th><th>Category</th><th>Amount</th><th>Description</th></tr>
+                <tr><th>Дата</th><th>Тип</th><th>Категория</th><th>Сумма</th><th>Описание</th></tr>
             </thead>
             <tbody>
                 {% for t in recent %}
                 <tr>
                     <td>{{ t['date'] }}</td>
-                    <td>{{ 'Income' if t['type']=='income' else 'Expense' }}</td>
+                    <td>{{ 'Доход' if t['type']=='income' else 'Расход' }}</td>
                     <td>{{ t['category'] }}</td>
-                    <td class="{{ 'text-success' if t['type']=='income' else 'text-danger' }}">{{ t['amount'] }} RUB</td>
+                    <td class="{{ 'text-success' if t['type']=='income' else 'text-danger' }}">{{ t['amount'] }} ₽</td>
                     <td>{{ t['description'] or '-' }}</td>
                 </tr>
                 {% endfor %}
                 {% if recent|length == 0 %}
-                <tr><td colspan="5" class="text-center">No transactions yet. Add your first one.</td></tr>
+                <tr><td colspan="5" class="text-center">Нет транзакций. Добавьте первую.</td></tr>
                 {% endif %}
             </tbody>
         </table>
