@@ -30,86 +30,109 @@
 </div>
 
 <div class="row">
-    <div class="col-md-6">
-        <div class="card">
+    <div class="col-md-6 mb-3">
+        <div class="card h-100">
             <div class="card-body">
                 <h5>Расходы по категориям</h5>
-                <table class="table table-sm table-bordered">
-                    <thead>
-                        <tr><th>Категория</th><th>Сумма</th><th>Доля</th></tr>
-                    </thead>
-                    <tbody>
-                        {% if expense_data %}
-                            {% set total = expense_data | sum(attribute='total') %}
-                            {% for item in expense_data %}
-                            <tr>
-                                <td>{{ item.category }}</td>
-                                <td>{{ item.total }} ₽</td>
-                                <td>
-                                    <div class="progress">
-                                        <div class="progress-bar" role="progressbar" style="width: {{ (item.total / total * 100)|round(1) }}%">
-                                            {{ (item.total / total * 100)|round(1) }}%
+                <div style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-sm table-bordered">
+                        <thead>
+                            <tr><th>Категория</th><th>Сумма</th><th>Доля</th></tr>
+                        </thead>
+                        <tbody>
+                            {% if expense_data %}
+                                {% set total = expense_data | sum(attribute='total') %}
+                                {% for item in expense_data %}
+                                {% set percent = (item.total / total * 100) %}
+                                <tr>
+                                    <td>{{ item.category }}</td>
+                                    <td>{{ item.total }} ₽</td>
+                                    <td style="width: 40%;">
+                                        <div class="progress" style="height: 28px; background-color: #e9ecef;">
+                                            <div class="progress-bar" role="progressbar"
+                                                 style="width: {{ percent }}%; min-width: 40px; background-color: #0d6efd; color: white; font-weight: bold; display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; font-size: 0.9rem;">
+                                                {{ percent|round(1) }}%
+                                            </div>
                                         </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        {% else %}
-                            <tr><td colspan="3">Нет расходов</td></tr>
-                        {% endif %}
-                    </tbody>
-                </table>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr><td colspan="3">Нет расходов</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
-    {% if forecast_html %}
-    <div class="col-md-6">
-        <div class="card">
+    <div class="col-md-6 mb-3">
+        <div class="card h-100">
             <div class="card-body">
-                <div id="forecastChart"></div>
+                <h5>Прогноз расходов на следующую неделю</h5>
+                {% if forecast_html %}
+                <div id="forecastChart" style="height: 350px;"></div>
+                {% else %}
+                <p class="text-muted">Недостаточно данных для прогноза (нужно минимум 7 дней с расходами).</p>
+                {% endif %}
             </div>
         </div>
     </div>
-    {% endif %}
 </div>
 
 <div class="card mt-4">
     <div class="card-header">Последние транзакции</div>
     <div class="card-body">
-        <table class="table table-striped">
-            <thead>
-                <tr><th>Дата</th><th>Тип</th><th>Категория</th><th>Сумма</th><th>Описание</th></tr>
-            </thead>
-            <tbody>
-                {% for t in recent %}
-                <tr>
-                    <td>{{ t['date'] }}</td>
-                    <td>{{ 'Доход' if t['type']=='income' else 'Расход' }}</td>
-                    <td>{{ t['category'] }}</td>
-                    <td class="{{ 'text-success' if t['type']=='income' else 'text-danger' }}">{{ t['amount'] }} ₽</td>
-                    <td>{{ t['description'] or '-' }}</td>
-                </tr>
-                {% endfor %}
-                {% if recent|length == 0 %}
-                <tr><td colspan="5" class="text-center">Нет транзакций. Добавьте первую.</td></tr>
-                {% endif %}
-            </tbody>
-        </table>
+        <div style="max-height: 300px; overflow-y: auto;">
+            <table class="table table-striped">
+                <thead><tr><th>Дата</th><th>Тип</th><th>Категория</th><th>Сумма</th><th>Описание</th></tr></thead>
+                <tbody>
+                    {% for t in recent %}
+                    <tr>
+                        <td>{{ t['date'] }}</td>
+                        <td>{{ 'Доход' if t['type']=='income' else 'Расход' }}</td>
+                        <td>{{ t['category'] }}</td>
+                        <td class="{{ 'text-success' if t['type']=='income' else 'text-danger' }}">{{ t['amount'] }} ₽</td>
+                        <td>{{ t['description'] or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if recent|length == 0 %}
+                    <tr><td colspan="5" class="text-center">Нет транзакций. Добавьте первую.</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
+<script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
 <script>
     function renderChart(elementId, chartData) {
         let el = document.getElementById(elementId);
         if (el && chartData && chartData.data && chartData.layout) {
-            Plotly.purge(elementId);
-            Plotly.newPlot(elementId, chartData.data, chartData.layout);
+            try {
+                Plotly.purge(elementId);
+                Plotly.newPlot(elementId, chartData.data, chartData.layout);
+                console.log("Chart rendered successfully in", elementId);
+            } catch(e) {
+                console.error("Plotly error in", elementId, e);
+            }
+        } else {
+            console.warn("Element or chartData missing for", elementId);
         }
     }
+
     {% if forecast_html %}
-    let forecastGraph = {{ forecast_html | safe }};
-    renderChart('forecastChart', forecastGraph);
+        console.log("forecast_html is present, length: {{ forecast_html|length }}");
+        var forecastGraph = {{ forecast_html | safe }};
+        console.log("forecastGraph data keys:", Object.keys(forecastGraph));
+        if (forecastGraph && forecastGraph.data) {
+            console.log("forecastGraph.data[0]:", forecastGraph.data[0]);
+        }
+        renderChart('forecastChart', forecastGraph);
+    {% else %}
+        console.log("forecast_html is None");
     {% endif %}
 </script>
 {% endblock %}
