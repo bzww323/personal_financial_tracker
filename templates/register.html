@@ -3,19 +3,19 @@
 <div class="row justify-content-center">
     <div class="col-md-6">
         <div class="card">
-            <div class="card-header">Register</div>
+            <div class="card-header">Регистрация</div>
             <div class="card-body">
                 <form method="POST">
                     <div class="mb-3">
-                        <label>Username</label>
+                        <label>Имя пользователя</label>
                         <input type="text" name="username" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label>Password</label>
+                        <label>Пароль</label>
                         <input type="password" name="password" class="form-control" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Register</button>
-                    <a href="{{ url_for('login') }}" class="btn btn-link">Already have an account? Login</a>
+                    <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
+                    <a href="{{ url_for('login') }}" class="btn btn-link">Уже есть аккаунт? Войти</a>
                 </form>
             </div>
         </div>
