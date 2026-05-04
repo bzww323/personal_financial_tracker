@@ -123,6 +123,9 @@ def dashboard():
     total_expense = sum(float(t['amount']) for t in transactions if t['type'] == 'expense')
     balance = total_income - total_expense
     
+    expense_rows = db.execute('SELECT category, SUM(amount) as total FROM transactions WHERE user_id = ? AND type = "expense" GROUP BY category', (current_user.id,)).fetchall()
+    expense_data = [{'category': r['category'], 'total': float(r['total'])} for r in expense_rows]
+    
     forecast_html = None
     rows = db.execute('SELECT date, SUM(amount) as daily_expense FROM transactions WHERE user_id = ? AND type = "expense" GROUP BY date ORDER BY date DESC LIMIT 30', (current_user.id,)).fetchall()
     if len(rows) >= 7:
@@ -131,21 +134,26 @@ def dashboard():
         y = df['expense'].values
         model = LinearRegression().fit(X, y)
         forecast = np.maximum(model.predict(np.arange(len(df), len(df) + 7).reshape(-1, 1)), 0).tolist()
-        df_forecast = pd.DataFrame({'День': range(1, 8), 'Прогноз расходов (₽)': forecast})
-        fig = px.line(df_forecast, x='День', y='Прогноз расходов (₽)', title='Прогноз расходов на следующую неделю')
+        df_forecast = pd.DataFrame({'День': range(1, 8), 'Прогноз расходов': forecast})
+        fig = px.line(df_forecast, x='День', y='Прогноз расходов', title='Прогноз расходов на следующую неделю')
         forecast_html = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    
     pie_html = None
-    expense_rows = db.execute('SELECT category, SUM(amount) as total FROM transactions WHERE user_id = ? AND type = "expense" GROUP BY category', (current_user.id,)).fetchall()
     if expense_rows:
         pie_df = pd.DataFrame({'Категория': [r['category'] for r in expense_rows], 'Сумма': [float(r['total']) for r in expense_rows]})
         fig_pie = px.pie(pie_df, values='Сумма', names='Категория', title='Расходы по категориям')
         pie_html = json.dumps(fig_pie, cls=plotly.utils.PlotlyJSONEncoder)
     
     recent = list(transactions[:10])
-    return render_template('dashboard.html', balance=balance, total_income=total_income, total_expense=total_expense, pie_html=pie_html, forecast_html=forecast_html, recent=recent, len=len)
-
-def get_forecast(user_id, db):
-    pass
+    return render_template('dashboard.html',
+                         balance=balance,
+                         total_income=total_income,
+                         total_expense=total_expense,
+                         pie_html=pie_html,
+                         forecast_html=forecast_html,
+                         recent=recent,
+                         len=len,
+                         expense_data=expense_data)
 
 if __name__ == '__main__':
     init_db()
