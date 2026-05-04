@@ -8,6 +8,7 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 import plotly.express as px
 import json
+import plotly
 import os
 from dotenv import load_dotenv
 load_dotenv()
