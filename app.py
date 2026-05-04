@@ -162,7 +162,6 @@ def dashboard():
     expenses_by_category = {}
     
     for t in transactions:
-        # Принудительно преобразуем amount в float (на случай, если пришло строкой)
         amount = float(t['amount'])
         if t['type'] == 'income':
             total_income += amount
@@ -171,12 +170,10 @@ def dashboard():
             cat = t['category']
             expenses_by_category[cat] = expenses_by_category.get(cat, 0.0) + amount
     
-    # Отладка: выводим суммы по категориям в консоль
     print("Расходы по категориям (суммы):", expenses_by_category)
     
     balance = total_income - total_expense
     
-    # --- Прогноз (ML) ---
     forecast_html = None
     forecast = get_forecast(current_user.id, db)
     if forecast:
@@ -188,10 +185,8 @@ def dashboard():
                       title='Прогноз расходов на следующую неделю')
         forecast_html = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
     
-    # --- Круговая диаграмма расходов ---
     pie_html = None
     if expenses_by_category:
-        # Убеждаемся, что суммы float
         pie_data = {cat: float(amt) for cat, amt in expenses_by_category.items()}
         pie_df = pd.DataFrame({
             'Категория': list(pie_data.keys()),
