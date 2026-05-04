@@ -30,16 +30,6 @@
 </div>
 
 <div class="row">
-    {% if pie_html %}
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <div id="pieChart"></div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-    
     <div class="col-md-6">
         <div class="card">
             <div class="card-body">
@@ -49,17 +39,16 @@
                         <tr><th>Категория</th><th>Сумма</th><th>Доля</th></tr>
                     </thead>
                     <tbody>
-                        {% set expense_rows = get_expense_rows() %}
-                        {% if expense_rows %}
-                            {% set total = expense_rows | sum(attribute='total') %}
-                            {% for row in expense_rows %}
+                        {% if expense_data %}
+                            {% set total = expense_data | sum(attribute='total') %}
+                            {% for item in expense_data %}
                             <tr>
-                                <td>{{ row.category }}</td>
-                                <td>{{ row.total }} ₽</td>
+                                <td>{{ item.category }}</td>
+                                <td>{{ item.total }} ₽</td>
                                 <td>
                                     <div class="progress">
-                                        <div class="progress-bar" role="progressbar" style="width: {{ (row.total / total * 100)|round(1) }}%">
-                                            {{ (row.total / total * 100)|round(1) }}%
+                                        <div class="progress-bar" role="progressbar" style="width: {{ (item.total / total * 100)|round(1) }}%">
+                                            {{ (item.total / total * 100)|round(1) }}%
                                         </div>
                                     </div>
                                 </td>
@@ -75,7 +64,7 @@
     </div>
 
     {% if forecast_html %}
-    <div class="col-md-12 mt-3">
+    <div class="col-md-6">
         <div class="card">
             <div class="card-body">
                 <div id="forecastChart"></div>
@@ -118,10 +107,6 @@
             Plotly.newPlot(elementId, chartData.data, chartData.layout);
         }
     }
-    {% if pie_html %}
-    let pieGraph = {{ pie_html | safe }};
-    renderChart('pieChart', pieGraph);
-    {% endif %}
     {% if forecast_html %}
     let forecastGraph = {{ forecast_html | safe }};
     renderChart('forecastChart', forecastGraph);
