@@ -78,21 +78,26 @@
 <script>
     function renderChart(elementId, chartData) {
         let el = document.getElementById(elementId);
-        if (el && chartData && chartData.data && chartData.layout) {
+        if ( el && chartData && chartData.data && chartData.layout ) {
             Plotly.purge(elementId);
             Plotly.newPlot(elementId, chartData.data, chartData.layout);
         }
     }
 
     {% if pie_html %}
-    let pieGraph = {{ pie_html | safe }};
-    console.log("PIE GRAPH DATA:", pieGraph);
-    renderChart('pieChart', pieGraph);
+        let pieGraph = {{ pie_html | safe }};
+        console.log("===== PIE GRAPH DATA =====");
+        console.log(pieGraph);
+        if (pieGraph && pieGraph.data && pieGraph.data[0]) {
+            console.log("Values array:", pieGraph.data[0].values);
+            console.log("Labels array:", pieGraph.data[0].labels);
+        }
+        renderChart('pieChart', pieGraph);
     {% endif %}
     
     {% if forecast_html %}
-    let forecastGraph = {{ forecast_html | safe }};
-    renderChart('forecastChart', forecastGraph);
+        let forecastGraph = {{ forecast_html | safe }};
+        renderChart('forecastChart', forecastGraph);
     {% endif %}
 </script>
 {% endblock %}
